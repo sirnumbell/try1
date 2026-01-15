@@ -4,64 +4,55 @@ import google.generativeai as genai
 from flask import Flask
 from threading import Thread
 
-# --- НАСТРОЙКИ (КЛЮЧИ) ---
-# Актуальный токен из BotFather (начинается на 8586...)
+# --- НАСТРОЙКИ ---
+# Твой актуальный токен и ключ Gemini
 BOT_TOKEN = "8586072127:AAE9tfgdgyBcIHd3T9tCF3bCp5SbC-GyTfA"
-
-# Твой API-ключ Gemini (начинается на AIza...)
 GOOGLE_KEY = "AIzaSyDnyckWdUCI_sVGwx3uqX-tNCVJ92_p8jg"
 
-# Настройка ИИ (используем стабильную версию 1.5-flash)
+# Настройка Gemini
 genai.configure(api_key=GOOGLE_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # Настройка Telegram бота
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# --- ВЕБ-СЕРВЕР ДЛЯ RENDER ---
+# --- ВЕБ-СЕРВЕР (ДЛЯ ПОРТА RENDER) ---
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "I am alive!"
+    return "Бот работает!"
 
 def run():
-    app.run(host='0.0.0.0', port=8080)
+    # Render передает порт через переменную окружения, либо используем 8080
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 def keep_alive():
     t = Thread(target=run)
     t.start()
 
 # --- ЛОГИКА БОТА ---
-
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Привет! Я твой ИИ-помощник. Напиши мне любой вопрос!")
+    bot.reply_to(message, "Я полностью перезапущен и готов к работе!")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
     try:
-        # Отправляем текст в нейросеть
         response = model.generate_content(message.text)
-        if response.text:
-            bot.reply_to(message, response.text)
-        else:
-            bot.reply_to(message, "Извини, я не смог сформировать ответ.")
+        bot.reply_to(message, response.text)
     except Exception as e:
-        # Выводим точную ошибку в логи Render
-        print(f"ОШИБКА GEMINI: {e}")
-        bot.reply_to(message, "Я тебя слышу, но у моей нейросети возникла заминка. Попробуй еще раз!")
+        print(f"Ошибка Gemini: {e}")
+        bot.reply_to(message, "Я тебя слышу, но нейросеть задумалась. Попробуй еще раз!")
 
 # --- ЗАПУСК ---
 if __name__ == "__main__":
-    print("--- ЗАПУСК БОТА ---")
-    keep_alive()  # Запускаем веб-сервер
+    print("--- СИСТЕМА ЗАПУСКАЕТСЯ ---")
+    keep_alive() # Запуск Flask в отдельном потоке
     
-    # ЭТА СТРОЧКА УБИРАЕТ ОШИБКУ 409
+    # КЛЮЧЕВОЙ МОМЕНТ: Удаляем старые вебхуки, чтобы убрать ошибку 409
     bot.remove_webhook()
     
-    try:
-        print("Бот готов к работе!")
-        bot.infinity_polling(timeout=20, long_polling_timeout=10)
-    except Exception as e:
-        print(f"Критическая ошибка: {e}")
+    print("Соединение с Telegram установлено. Жду сообщений...")
+    bot.infinity_polling(timeout=20, long_polling_timeout=10)
