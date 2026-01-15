@@ -5,13 +5,13 @@ from flask import Flask
 from threading import Thread
 
 # --- НАСТРОЙКИ (КЛЮЧИ) ---
-# Токен из твоего скриншота BotFather (заканчивается на GyTfA)
+# Актуальный токен из BotFather (начинается на 8586...)
 BOT_TOKEN = "8586072127:AAE9tfgdgyBcIHd3T9tCF3bCp5SbC-GyTfA"
 
-# Ключ из твоего скриншота Google AI Studio (начинается на AIzaSyD)
+# Твой API-ключ Gemini (начинается на AIza...)
 GOOGLE_KEY = "AIzaSyDnyckWdUCI_sVGwx3uqX-tNCVJ92_p8jg"
 
-# Настройка нейросети (используем стабильную версию 1.5-flash)
+# Настройка ИИ (используем стабильную версию 1.5-flash)
 genai.configure(api_key=GOOGLE_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -48,20 +48,20 @@ def handle_message(message):
         else:
             bot.reply_to(message, "Извини, я не смог сформировать ответ.")
     except Exception as e:
-        # Пишем ошибку в логи Render для диагностики
+        # Выводим точную ошибку в логи Render
         print(f"ОШИБКА GEMINI: {e}")
-        bot.reply_to(message, "Я тебя слышу, но у моей нейросети возникла заминка. Попробуй еще раз через минуту!")
+        bot.reply_to(message, "Я тебя слышу, но у моей нейросети возникла заминка. Попробуй еще раз!")
 
 # --- ЗАПУСК ---
 if __name__ == "__main__":
     print("--- ЗАПУСК БОТА ---")
     keep_alive()  # Запускаем веб-сервер
     
-    # Сброс старых подключений (защита от ошибки 409)
+    # ЭТА СТРОЧКА УБИРАЕТ ОШИБКУ 409
     bot.remove_webhook()
     
     try:
-        print("Бот успешно запущен и ждет сообщений...")
-        bot.infinity_polling(timeout=10, long_polling_timeout=5)
+        print("Бот готов к работе!")
+        bot.infinity_polling(timeout=20, long_polling_timeout=10)
     except Exception as e:
         print(f"Критическая ошибка: {e}")
