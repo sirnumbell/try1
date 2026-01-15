@@ -1,22 +1,31 @@
-import telebot
+Конечно! Давай сделаем так: я дам тебе полный, финальный текст кода, где уже заменены названия моделей на самые стабильные и добавлены все нужные исправления.
+
+Тебе нужно просто стереть всё в твоем файле main.py на GitHub и вставить этот текст целиком.
+
+Python
+
 import os
+import telebot
 import google.generativeai as genai
 from flask import Flask
 from threading import Thread
 
-# --- НАСТРОЙКИ ---
-# Вставь сюда свои актуальные ключи
-BOT_TOKEN = "8586072127:AAE9tfgdgyBcIHd3T9tCF3bCp5SbC-GyTfA"
-GOOGLE_KEY = "AIzaSyDnyckWdUcI_sVGwx3uqX-tNCVJ92_p8jg" # Убедись, что здесь твой новый ключ Gemini
+# --- 1. НАСТРОЙКИ (КЛЮЧИ) ---
+# Твой новый токен от BotFather (который начинается на 8586...)
+BOT_TOKEN = "8586072127:AAGS46Ea93p_hY879A5SbC-GyTfA"
 
-# Настройка Gemini
+# Твой API-ключ от Google AI Studio (который начинается на AIza...)
+GOOGLE_KEY = "AIzaSyDnyckWdUCI_sVGwx3uqX-tNCVJ92_p8jg"
+
+# Настройка нейросети
 genai.configure(api_key=GOOGLE_KEY)
-model = genai.GenerativeModel('gemini-pro')
+# Используем модель 1.5-flash — она самая быстрая и надежная для бесплатных аккаунтов
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # Настройка Telegram бота
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# --- ВЕБ-СЕРВЕР ДЛЯ RENDER ---
+# --- 2. ВЕБ-СЕРВЕР ДЛЯ RENDER (ЧТОБЫ БОТ НЕ СПАЛ) ---
 app = Flask('')
 
 @app.route('/')
@@ -30,33 +39,40 @@ def keep_alive():
     t = Thread(target=run)
     t.start()
 
-# --- ЛОГИКА БОТА ---
+# --- 3. ЛОГИКА ОБРАБОТКИ СООБЩЕНИЙ ---
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Привет! Я твой ИИ-помощник. Напиши мне любой вопрос.")
+    bot.reply_to(message, "Привет! Я твой ИИ-помощник на базе Gemini. Напиши мне любой вопрос, и я постараюсь ответить!")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
     try:
-        # Отправляем текст в нейросеть
+        # Отправляем текст пользователя в Gemini
         response = model.generate_content(message.text)
-        # Отвечаем пользователю результатом
-        bot.reply_to(message, response.text)
+        
+        # Если ответ пустой или заблокирован фильтрами
+        if not response.text:
+            bot.reply_to(message, "Извини, я не могу ответить на этот вопрос.")
+        else:
+            bot.reply_to(message, response.text)
+            
     except Exception as e:
-        print(f"Ошибка ИИ: {e}")
-        bot.reply_to(message, "Я тебя слышу, но у моей нейросети возникла заминка. Попробуй еще раз через минуту!")
+        # Выводим ошибку в логи Render, чтобы мы могли её увидеть
+        print(f"ОШИБКА GEMINI: {e}")
+        bot.reply_to(message, "Я тебя слышу, но у моей нейросети возникла заминка. Попробуй задать вопрос еще раз через минуту!")
 
-# --- ЗАПУСК ---
+# --- 4. ЗАПУСК БОТА ---
 if __name__ == "__main__":
-    print("Запуск бота...")
-    keep_alive()  # Запускаем веб-сервер
+    print("--- БОТ ЗАПУСКАЕТСЯ ---")
+    keep_alive()  # Запуск веб-сервера
     
-    # Очистка старых соединений перед стартом
+    # Сброс старых подключений (защита от ошибки 409)
     bot.remove_webhook()
     
-    # Запуск бесконечного цикла с защитой от вылета
+    # Запуск бота в режиме бесконечного опроса
     try:
-        bot.polling(none_stop=True, interval=1, timeout=20)
+        print("Бот успешно подключен к Telegram и ждет сообщений...")
+        bot.infinity_polling(timeout=10, long_polling_timeout=5)
     except Exception as e:
-        print(f"Ошибка при работе: {e}")
+        print(f"Критическая ошибка запуска: {e}")
