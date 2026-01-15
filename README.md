@@ -1,1 +1,2 @@
-# try1
+pyTelegramBotAPI
+google-generativeai
