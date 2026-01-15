@@ -6,7 +6,7 @@ from threading import Thread
 
 # --- НАСТРОЙКИ ---
 # Вставь сюда свои актуальные ключи
-BOT_TOKEN = "8121652758:AAGS46Ea93p_hY879A5SbC-GyTfA"
+BOT_TOKEN = "8586072127:AAE9tfgdgyBcIHd3T9tCF3bCp5SbC-GyTfA"
 GOOGLE_KEY = "AIzaSyDnyckWdUcI_sVGwx3uqX-tNCVJ92_p8jg" # Убедись, что здесь твой новый ключ Gemini
 
 # Настройка Gemini
