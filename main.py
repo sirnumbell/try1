@@ -5,7 +5,7 @@ from flask import Flask
 from threading import Thread
 
 # ТВОИ КЛЮЧИ
-TOKEN = "8580398532:AAF1gHGB_3mFaEiGQshJc-dpz4XUjMXku48"
+TOKEN = "8586072127:AAGbnc1Y86ZFU-Cl7K9UIUilsfiqzDhnxn4"
 GOOGLE_KEY = "AIzaSyBCnKsKlyRGVfYq9nN4Jkmtw1UVfYiegp4"
 
 # Настройка ИИ
