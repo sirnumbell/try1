@@ -3,39 +3,40 @@ import telebot
 import google.generativeai as genai
 from flask import Flask
 from threading import Thread
+import time
 
 # --- НАСТРОЙКИ ---
-# Твой актуальный токен и ключ Gemini
 BOT_TOKEN = "8586072127:AAE9tfgdgyBcIHd3T9tCF3bCp5SbC-GyTfA"
 GOOGLE_KEY = "AIzaSyDnyckWdUCI_sVGwx3uqX-tNCVJ92_p8jg"
 
-# Настройка Gemini
+# Инициализация ИИ
 genai.configure(api_key=GOOGLE_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Настройка Telegram бота
+# Инициализация бота
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# --- ВЕБ-СЕРВЕР (ДЛЯ ПОРТА RENDER) ---
+# --- ВЕБ-СЕРВЕР ---
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "Бот работает!"
+    return "Bot is alive!"
 
 def run():
-    # Render передает порт через переменную окружения, либо используем 8080
+    # Render автоматически подставит нужный порт
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
 def keep_alive():
     t = Thread(target=run)
+    t.daemon = True # Поток завершится вместе с основной программой
     t.start()
 
-# --- ЛОГИКА БОТА ---
+# --- ОБРАБОТКА СООБЩЕНИЙ ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Я полностью перезапущен и готов к работе!")
+    bot.reply_to(message, "Система перезапущена! Теперь я готов отвечать.")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
@@ -43,16 +44,20 @@ def handle_message(message):
         response = model.generate_content(message.text)
         bot.reply_to(message, response.text)
     except Exception as e:
-        print(f"Ошибка Gemini: {e}")
-        bot.reply_to(message, "Я тебя слышу, но нейросеть задумалась. Попробуй еще раз!")
+        print(f"Ошибка ИИ: {e}")
+        bot.reply_to(message, "Произошла ошибка в нейросети. Попробуйте ещё раз через минуту.")
 
-# --- ЗАПУСК ---
+# --- ГЛАВНЫЙ ЗАПУСК ---
 if __name__ == "__main__":
-    print("--- СИСТЕМА ЗАПУСКАЕТСЯ ---")
-    keep_alive() # Запуск Flask в отдельном потоке
+    print("--- ЗАПУСК СИСТЕМЫ ---")
+    keep_alive() 
     
-    # КЛЮЧЕВОЙ МОМЕНТ: Удаляем старые вебхуки, чтобы убрать ошибку 409
+    # КЛЮЧЕВОЕ РЕШЕНИЕ:
+    # 1. Принудительно отключаем любые вебхуки
     bot.remove_webhook()
+    time.sleep(1) # Короткая пауза для синхронизации с серверами Telegram
     
-    print("Соединение с Telegram установлено. Жду сообщений...")
+    print("Бот успешно подключен. Ожидаю сообщений...")
+    
+    # Запуск опроса с защитой от ошибок
     bot.infinity_polling(timeout=20, long_polling_timeout=10)
